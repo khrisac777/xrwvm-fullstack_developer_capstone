@@ -5,24 +5,48 @@
   <link rel="stylesheet" href="static/style.css">
   <link rel="stylesheet" href="static/bootstrap.min.css">
 <script>
+  const logout = async (e) => {
+    // Evitamos que el enlace navegue o recargue la página antes de tiempo
+    if (e) e.preventDefault();
 
-const logout = async (e) => {
-//Include the code for logout here.
-};
+    let logout_url = window.location.origin + "/djangoapp/logout";
 
-let checkSession = ()=>{
-  let curr_user = sessionStorage.getItem("username");
+    try {
+      const res = await fetch(logout_url, {
+        method: "GET",
+      });
 
-  if (curr_user && curr_user !== "") {
-    document.getElementById("loginlogout").innerHTML = 
-    '<span class="homepage_links">' + curr_user +'</span>' +
-    '<a class="homepage_links" onclick="logout()" href="/">Logout</a>'
-  } else {
-    document.getElementById("loginlogout").innerHTML = 
-    '<a class="homepage_links" href="/login">Login</a>'+
-    '<a class="homepage_links"  href="/register">Register</a>'
+      const json = await res.json();
+
+      if (json) {
+        // Limpiamos el almacenamiento de sesión
+        sessionStorage.clear();
+        // Notificamos al usuario PRIMERO
+        alert("You have been logged out.");
+        // Redireccionamos limpiamente a la raíz del sitio
+        window.location.href = window.location.origin;
+      } else {
+        alert("The user could not be logged out.");
+      }
+    } catch (error) {
+      console.error("Error en la petición de logout:", error);
+    }
+  };
+
+  let checkSession = () => {
+    let curr_user = sessionStorage.getItem("username");
+
+    if (curr_user && curr_user !== "") {
+      document.getElementById("loginlogout").innerHTML =
+        '<span class="homepage_links" style="margin-right: 10px; font-weight: bold;">' + curr_user + '</span>' +
+        // Pasamos 'event' como argumento para que la función pueda detener la recarga automática
+        '<a class="homepage_links" onclick="logout(event)" href="#">Logout</a>';
+    } else {
+      document.getElementById("loginlogout").innerHTML =
+        '<a class="homepage_links" style="margin-right: 10px;" href="/login">Login</a>' +
+        '<a class="homepage_links" href="/register">Register</a>';
+    }
   }
- }
 </script>
 </head>
 <body onload="checkSession()">
