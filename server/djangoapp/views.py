@@ -17,10 +17,8 @@ from .populate import initiate
 from .models import CarMake, CarModel
 from .restapis import get_request, analyze_review_sentiments, post_review
 
-
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-
 
 # Create your views here.
 
@@ -58,14 +56,12 @@ def registration(request):
     last_name = data['lastName']
     email = data['email']
     username_exist = False
-    
     try:
         # Check if user already exists
         User.objects.get(username=username)
         username_exist = True
-    except:
+    except Exception as err:
         logger.debug("{} is new user".format(username))
-
     # If it is a new user, create it
     if not username_exist:
         user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, password=password, email=email)
@@ -77,7 +73,7 @@ def registration(request):
         data = {"userName": username, "error": "Already Registered"}
         return JsonResponse(data)
 
-def get_cars(request):
+def get_cars():
     count = CarMake.objects.filter().count()
     print(count)
     if(count == 0):
@@ -137,7 +133,7 @@ def add_review(request):
         try:
             response = post_review(data)
             return JsonResponse({"status":200})
-        except:
+        except Exception as err:
             return JsonResponse({"status":401,"message":"Error in posting review"})
     else:
         return JsonResponse({"status":403,"message":"Unauthorized"})

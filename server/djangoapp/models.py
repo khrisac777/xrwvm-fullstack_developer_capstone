@@ -55,3 +55,4 @@ class CarModel(models.Model):
     def __str__(self):
         # Devuelve la marca y el modelo juntos (Ej. "Toyota Corolla")
         return f"{self.car_make.name} {self.name}"
+    
