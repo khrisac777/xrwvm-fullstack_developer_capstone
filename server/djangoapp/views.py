@@ -42,10 +42,11 @@ def login_user(request):
 
 # Create a `logout_request` view to handle sign out request
 def logout_request(request):
-    # logout user in request
+    # Get user object based on session id in request
+    user = request.user
+    # If user is found, call Django logout method to logout current user
     logout(request)
-    # Redirect user back to index page after logging out    
-    data = {"status": "Logged out"}
+    data = {"userName": user.username, "status": "Logged out"}
     return JsonResponse(data)
 
 # Create a `registration` view to handle sign up request
@@ -77,7 +78,7 @@ def registration(request):
         return JsonResponse(data)
 
 
-def get_cars():
+def get_cars(request):
     count = CarMake.objects.filter().count()
     print(count)
     if count == 0:
@@ -85,27 +86,24 @@ def get_cars():
     car_models = CarModel.objects.select_related('car_make')
     cars = []
     for car_model in car_models:
-        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
-    return JsonResponse({"CarModels":cars})
+        cars.append(
+            {"CarModel": car_model.name, "CarMake": car_model.car_make.name}
+        )
+    return JsonResponse({"CarModels": cars})
 
 
-# # Update the `get_dealerships` view to render the index page with
-# a list of dealerships
-# def get_dealerships(request):
 def get_dealerships(request, state="All"):
     if state == "All":
         endpoint = "/fetchDealers"
     else:
-        endpoint = "/fetchDealers/"+state
+        endpoint = "/fetchDealers/" + state
     dealerships = get_request(endpoint)
-    return JsonResponse({"status":200,"dealers":dealerships})
+    return JsonResponse({"status": 200, "dealers": dealerships})
 
-# Create a `get_dealer_reviews` view to render the reviews of a dealer
-# def get_dealer_reviews(request,dealer_id):
-# ...
+
 def get_dealer_reviews(request, dealer_id):
     if dealer_id:
-        endpoint = "/fetchReviews/dealer/"+str(dealer_id)
+        endpoint = "/fetchReviews/dealer/" + str(dealer_id)
         reviews = get_request(endpoint)
         for review_detail in reviews:
             response = analyze_review_sentiments(review_detail['review'])
@@ -113,35 +111,30 @@ def get_dealer_reviews(request, dealer_id):
             if response and 'sentiment' in response:
                 review_detail['sentiment'] = response['sentiment']
             else:
-                review_detail['sentiment'] = "neutral" # Valor por defecto si falla el contenedor
-        return JsonResponse({"status":200,"reviews":reviews})
+                review_detail['sentiment'] = "neutral"  # Valor por defecto
+        return JsonResponse({"status": 200, "reviews": reviews})
     else:
-        return JsonResponse({"status":400,"message":"Bad Request"})
-# Create a `get_dealer_details` view to render the dealer details
-# def get_dealer_details(request, dealer_id):
-# ...
+        return JsonResponse({"status": 400, "message": "Bad Request"})
 
 
 def get_dealer_details(request, dealer_id):
     if dealer_id:
-        endpoint = "/fetchDealer/"+str(dealer_id)
+        endpoint = "/fetchDealer/" + str(dealer_id)
         dealership = get_request(endpoint)
-        return JsonResponse({"status":200,"dealer":dealership})
+        return JsonResponse({"status": 200, "dealer": dealership})
     else:
-        return JsonResponse({"status":400,"message":"Bad Request"})
+        return JsonResponse({"status": 400, "message": "Bad Request"})
 
 
-# Create a `add_review` view to submit a review
-# def add_review(request):
-# ...
 def add_review(request):
     if not request.user.is_anonymous:
         data = json.loads(request.body)
         try:
-            response = post_review(data)
-            return JsonResponse({"status":200})
-        except Exception as e:
-            logger.error(f"Error posting review: {e}")
-            return JsonResponse({"status":500,"message":"Internal Server Error"})
+            post_review(data)
+            return JsonResponse({"status": 200})
+        except Exception:
+            return JsonResponse(
+                {"status": 401, "message": "Error in posting review"}
+            )
     else:
-        return JsonResponse({"status":403,"message":"Unauthorized"})
+        return JsonResponse({"status": 403, "message": "Unauthorized"})
